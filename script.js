@@ -32,6 +32,10 @@ function clearAll() {
 }
 
 function backspace() {
+  if (waitingForSecond) {
+    return;
+  }
+
   if (currentValue.length === 1) {
     currentValue = "0";
   } else {
@@ -44,10 +48,17 @@ function chooseOperator(op) {
 
   if (firstNumber === null) {
     firstNumber = input;
-  } else if (operator) {
+  } else if (operator && !waitingForSecond) {
     const result = calculate(firstNumber, input, operator);
     currentValue = String(result);
     firstNumber = result;
+
+    if (currentValue === "Error") {
+      operator = null;
+      waitingForSecond = false;
+      updateDisplay();
+      return;
+    }
   }
 
   operator = op;
@@ -58,17 +69,13 @@ function calculate(a, b, op) {
   if (op === "+") return a + b;
   if (op === "-") return a - b;
   if (op === "*") return a * b;
-  if (op === "/") return b === 0 ? 0 : a / b;
+  if (op === "/") return b === 0 ? "Error" : a / b;
 }
 
 function equals() {
-  if (operator === null) return;
+  if (operator === null || waitingForSecond) return;
 
-  const result = calculate(
-    firstNumber,
-    Number(currentValue),
-    operator
-  );
+  const result = calculate(firstNumber, Number(currentValue), operator);
 
   currentValue = String(result);
   operator = null;
